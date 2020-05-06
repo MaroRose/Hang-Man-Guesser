@@ -1,0 +1,294 @@
+String jwords;
+String[] s, words;
+StringList list;
+int word_length;
+int which;
+int[] xs;
+int[] counter={};
+String[] g={};
+String guess;
+String[] info;
+int hang;
+int g_num;
+int step;
+String output;
+IntDict billy;
+int tries;
+StringList shortlist;
+color col;
+void setup() {
+  size(800, 800);
+
+  which=-1;
+  step=-1;
+  g_num=0;
+  hang=0;
+  guess="";
+  output="";
+  tries=10;
+  billy=new IntDict();
+  col=color(255);
+  word_length=1;
+
+  s=loadStrings("Words.txt");
+  jwords=join(s, " ");
+  words=splitTokens(jwords, "\" ,.!? ");
+  list= new StringList();
+  shortlist=list;
+  //Get txt file into code (DID IT)
+  //create arraylist of words so I can have variable length (DID IT)
+  //Count # of each letter in words of a given length to find the most common (DID IT)
+  //Use gain info (EX: the third letter is "r") to modify search and repeat previous step 
+  //look through letters in words
+  for (int i =0; i<words.length; i++) {
+    list.append(words[i]);
+  }
+}
+
+void think() {
+
+  for (int i=shortlist.size()-1; i>-1; i--) {
+    //println(shortlist.get(i) + ", "+shortlist.get(i).length());
+    if (shortlist.get(i).length()!=word_length) {
+
+      shortlist.remove(i);
+    }
+  }
+  for (int i=shortlist.size()-1; i>-1; i--) {
+
+    for (int j=0; j<shortlist.get(i).length(); j++) {
+      char ch=shortlist.get(i).charAt(j);
+      String c=str(ch);
+
+      c=c.toLowerCase();
+      billy.set(c, 0);
+    }
+  }
+
+  for (int i=shortlist.size()-1; i>-1; i--) {
+
+    for (int j=0; j<shortlist.get(i).length(); j++) {
+      char ch=shortlist.get(i).charAt(j);
+      String c=str(ch);
+
+
+      println(" "+info.length);
+
+      if (info[j].equals("_")==false) {
+        if (c.equals(info[j])==false) {
+
+          shortlist.remove(i);
+
+          break;
+        }
+      }
+    }
+  }
+
+  for (int i=0; i<shortlist.size(); i++) {
+    for (int j=0; j<shortlist.get(i).length(); j++) {
+
+      char ch=list.get(i).charAt(j);
+      String c=str(ch);
+      billy.increment(c.toLowerCase());
+    }
+  }
+  billy.sortValuesReverse();
+
+
+
+  g=billy.keyArray();
+  //println("DEBUG ",g.length,g_num);
+  if (g_num==g.length-1) {
+    g_num=0;
+  }
+  guess=g[g_num];
+  counter=billy.valueArray();
+  step=2;
+}
+
+
+void word_think() {
+  int[] ac=new int[shortlist.size()];
+  for (int i=shortlist.size()-1; i>-1; i--) {
+    for (int j=0; j<shortlist.get(i).length(); j++) {
+      if (str(shortlist.get(i).charAt(j)).equals(info[j])) {
+        ac[i]++;
+      }
+    }
+  }
+
+  sort(ac);
+  //println(shortlist.size()-1);
+  for (int j =0; j<word_length; j++) {
+    if (shortlist.size()>0) {
+      info[j]=str(shortlist.get(shortlist.size()-1).charAt(j));
+    }
+  }
+}
+
+void draw() {
+  if (step==-1) {
+    background(0);
+
+    fill(0, 255, 0);
+    rect(0, height*0.8, width, height);
+    fill(255);
+    textSize(60);
+    text("HangMan Guesser", width/4, 150);
+        textSize(50);
+    text("Begin", width/3, 50+height*0.8);
+
+    textSize(40);
+       text("How long is your word?", width/3, 450);
+       
+  
+    text(word_length+" letters", width/3, 500);
+        textSize(20);
+          text("R to restart ", width/3, 550);
+  }
+
+  if (step>0) {
+    background(0);
+
+    if (step==1) {
+      think();
+      /*for(int i =0; i<50; i++){
+       println(" ");
+       }*/
+      //println("Output "+output);
+      //println("Billy "+billy);
+
+
+      print(shortlist);
+      println(billy);
+      print("Idea: ");
+      for (int i =0; i<word_length; i++) {
+        print(info[i]);
+      }
+      print("\n");
+      //println(shortlist.size());
+    }
+
+    //WORD GUESSING
+    if (shortlist.size()<=tries || shortlist.size()==1) {
+      step=5;
+    }
+    if (step==5) {
+      word_think();
+      step++;
+    }
+
+    //DISPLAY
+    fill(255, 0, 0);// right (NO)
+    rect(width/2, height/2, width/2, height);
+    fill(0, 255, 0);//left (YES)
+    rect(0, height/2, height/2, height);
+
+    fill(255);
+    textSize(20);
+    text("Step: "+step, 40, 40);
+    text("Guess: "+guess, 40, 80);
+    text("Tries left: "+tries, 40, 120);
+
+    fill(col);
+    for (int i=0; i<word_length; i++) {
+      textSize(200/(word_length*0.8));
+      text(info[i], xs[i], 250);
+
+      if (step==3) {
+        if (mouseX>xs[i] && mouseX<xs[i]+(200/word_length) && mouseY<250 && mouseY>200) {
+          which=i;
+          text(which+1, xs[i], 250);
+        } else {
+          which=-1;
+        }
+      }
+    }
+    //LOSING
+    if (tries<0 && step!=7 || shortlist.size()==0 && step!=7) {
+      background(0);
+      fill(255, 0, 0);
+      textSize(60);
+      text("The computer couldn't \n guess your word :(", 100, 200);
+    }
+  }
+}
+
+void mousePressed() {
+  //Regular letter by letter
+  if (step==2) {
+    if (mouseX<width/2 && mouseY>height/2) {
+      step++;
+
+      println("correct");
+    }
+    if (mouseX>width/2 && mouseY>height/2) {
+
+      println("Nah beans");
+      g_num++;
+      think();
+      tries--;
+      println("Billy "+billy);
+    }
+  }
+
+  //Guessing words
+  if (step==6) {
+    if (mouseX<width/2) {
+      col=color(0, 255, 0);
+      println("Computer wins");
+    }
+    if (mouseX>width/2 && mouseY>height/2 && col!= color(0, 255, 0)) {
+
+      println("Nah beans");
+      shortlist.remove(shortlist.size()-1);
+      step=5;
+    }
+  }
+
+  if (step==3) {
+
+    for (int i=0; i<word_length; i++) {
+      if (mouseX>xs[i] && mouseX<xs[i]+(200/word_length) && mouseY<250 && mouseY>200) {
+        info[i]=guess;
+        step=1;
+      }
+    }
+  }
+
+
+  if (step==-1) {
+    if (mouseY>height*0.8) {
+
+      step=1; 
+      info=new String[word_length];
+      xs=new int [word_length];
+
+      for (int i=0; i<word_length; i++) {
+        info[i]="_";
+        xs[i]=200+(i*200/word_length);
+      }
+      print("GO", step);
+    }
+  }
+}
+
+
+void keyPressed() {
+  if (keyCode==8 && g_num>0) {
+    g_num--;
+  }
+  if (keyCode==82) { 
+    setup();
+  }
+
+  if (step==-1) {
+    if (keyCode==UP) {
+      word_length++;
+    }
+    if (keyCode==DOWN && word_length>1) {
+      word_length--;
+    }
+  }
+}
